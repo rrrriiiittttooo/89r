@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ここにページのタイトル書くよ！</title>
+    <meta charset="utf-8" />
+
+  </head>
+
+  <body>
+
+    <h1>明日の最終値は{{next_stock}}だ！！！</h1>
+    <div id = "sample1" value = {{list}}></div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.4/Chart.min.js"></script>
+        <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+        <canvas id="myChart"></canvas>
+    <script>
+       
+        var ele = document.getElementById('sample1');
+        var ctx = document.getElementById('myChart').getContext('2d');
+        ///var x = $("sample1").data("obj");
+var myChart = new Chart(ctx, {
+  type: 'list',
+  data: {
+   labels: ele,
+   datasets: [{
+      label: 'apples',
+      data: ele,
+      backgroundColor: "rgba(153,255,51,0.4)"
+    }//, {
+    //  label: 'oranges',
+   //   data: ridge_data,
+  //    backgroundColor: "rgba(255,153,0,0.4)"
+ //   }
+ ]
+  }
+});
+    
+    </script>
+  </body>
+</html>
