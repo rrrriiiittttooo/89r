@@ -97,20 +97,41 @@ def convert_array_concat(sum_data):
         f = np.append(f,sum_data_arr[i])
     return f
 
+def get_csv(**urls):
+    #URL先のCSVを取得する
+    
+    pattern = r'201[67]'
+
+    for url in urls:
+        match = re.search(pattern, url)
+        
+        try:
+            output_file_path = ".\\data\\stocks_6193-T_1d_" + match.group() + ".csv"
+            
+        except:
+            output_file_path = '.\\data\\new_stocks.csv'
+        
+        finally:
+            urllib.request.urlretrieve(url, output_file_path)
+
 def first_make_data():
     
     #初めてデータを取得する際に使用するメソッド    
     str_d = get_date()
-    output_file_path = ".\\data\\" + str_d + "vxc_stock"
+    output_dataframe_file_path = ".\\data\\" + str_d + "vxc_stock"
 
-    #csv file入手先
+    #サイトのcsv fileを取得
+    get_csv("http://k-db.com/stocks/6193-T_download=csv","http://k-db.com/stocks/6193-T/1d/2017?download=csv", "http://k-db.com/stocks/6193-T/1d/2016?download=csv")
+
+    #ローカルcsv file入手先
     data_2016 = pd.read_csv(".\data\stocks_6193-T_1d_2016.csv", sep="," ,encoding = "SHIFT-JIS").sort_index(ascending=False)
     data_2017 = pd.read_csv(".\data\stocks_6193-T_1d_2017.csv", sep="," ,encoding = "SHIFT-JIS").sort_index(ascending=False)
     data_vxc = pd.concat([data_2016, data_2017])
     #DataFrameをファイルに保存
-    data_vxc.to_picle(output_file_path) 
-    #DataFrameからデータを抽出
+    data_vxc.to_pickle(output_dataframe_file_path) 
     
+    
+    #DataFrameからデータを抽出
     date, head, hign, low, tail = extract_data(data_vxc)
 
     return date, head, hign, low, tail
@@ -128,11 +149,12 @@ def extract_data(data):
 def get_new_data():
 
     str_d = get_date()
+    #DataFrameの格納先、抽出先
     input_file_path = '.\\data\\' + str_d + "vxc_stock"
     output_file_path = '.\\data\\' + str_d + "vxc_stock"
     #下記のURLから直近250日のCSVデータを取得する
-    url  =  "http://k-db.com/stocks/6193-T_download=csv"
-    urllib.request.urlretrieve(url, '.\data\new_stocks.csv')
+    #url  =  "http://k-db.com/stocks/6193-T_download=csv"
+    #urllib.request.urlretrieve(url, '.\data\new_stocks.csv')
     #取得したCSVデータをDATAFRAME化し、既存のDATAFRAMEと結合する
     data_new = pd.read_csv(".\data\new_stocks.csv", sep="," ,encoding = "SHIFT-JIS")
     new_line = data_new[0:1]
@@ -142,7 +164,7 @@ def get_new_data():
 
     new_vxc = pd.concat([oldDataFrame, new_line])
     #結合したDATAFRAMEを再度保存する
-    new_vxc.to_picle(output_file_path) 
+    new_vxc.to_pickle(output_file_path) 
     #各インデックスのデータの取得
     date, head, hign, low, tail = extract_data(new_vxc)
 
@@ -247,6 +269,8 @@ def get_date():
 
 if __name__ == '__main__':
     
+    
+
     d_ = ".\data"
     m_ = ".\model"
 
@@ -267,7 +291,7 @@ if __name__ == '__main__':
         #s_list = [sum_first, sum_top, sum_tail, sum_last]
         #date, sum_first, sum_top, sum_tail, sum_last = get_new_data()
         #############################################################
-        date, sum_first, sum_top, sum_tail, sum_last = make_datas()#
+        date, sum_first, sum_top, sum_tail, sum_last = first_make_data()
         #############################################################
         #sum_first = convert_array_concat(sum_first)
         #sum_top = convert_array_concat(sum_top)
