@@ -120,8 +120,6 @@ def first_make_data():
     str_d = get_date()
     output_dataframe_file_path = ".\\data\\" + str_d + "vxc_stock"
 
-    
-
     #サイトのcsv fileを取得
     get_csv("http://k-db.com/stocks/6193-T?download=csv","http://k-db.com/stocks/6193-T/1d/2017?download=csv", "http://k-db.com/stocks/6193-T/1d/2016?download=csv")
 
@@ -155,18 +153,20 @@ def get_new_data():
     input_file_path = '.\\data\\' + str_d + "vxc_stock"
     output_file_path = '.\\data\\' + str_d + "vxc_stock"
     #下記のURLから直近250日のCSVデータを取得する
+    #ちょっと残しておく
     #url  =  "http://k-db.com/stocks/6193-T_download=csv"
     #urllib.request.urlretrieve(url, '.\data\new_stocks.csv')
     
     #最新の株価データを取得する
     get_csv("http://k-db.com/stocks/6193-T?download=csv")
-    #取得したCSVデータをDATAFRAME化し、既存のDATAFRAMEと結合する
+    
     data_new = pd.read_csv(".\\data\\new_stocks.csv", sep="," ,encoding = "SHIFT-JIS")
+    #直近のデータのみ取得
     new_line = data_new[0:1]
 
     with open(input_file_path, 'rb'):
         oldDataFrame= pickle.load()
-
+    #取得したCSVデータをDATAFRAME化し、既存のDATAFRAMEと結合する
     new_vxc = pd.concat([oldDataFrame, new_line])
     #結合したDATAFRAMEを再度保存する
     new_vxc.to_pickle(output_file_path) 
@@ -275,8 +275,6 @@ def get_date():
 
 if __name__ == '__main__':
     
-
-
     d_ = ".\data"
     m_ = ".\model"
 
@@ -294,12 +292,13 @@ if __name__ == '__main__':
     
     except:
         
-        #date, sum_first, sum_top, sum_tail, sum_last = get_new_data()
         #############################################################
+        #初めてこのWEBアプリを動かす際には下記の first_make_data()を用いる
+        #差分の株価データのみ利用する場合 get_new_data()を用いる
+        #後ほどクッキー等で対応予定
         #date, sum_first, sum_top, sum_tail, sum_last = first_make_data()
-        date, sum_first, sum_top, sum_tail, sum_last = get_new_data()
-
         #############################################################
+        date, sum_first, sum_top, sum_tail, sum_last = get_new_data()
         
         y_data = make_y_data(sum_last)
         X_data = stack_data(sum_first, sum_top, sum_tail, sum_last)
@@ -314,11 +313,12 @@ if __name__ == '__main__':
         #全データのうち8割を学習データ、2割をテストデータに分割する
         split_num = 0.8
         ratio = int(X_scaled.shape[0] * split_num)
-        train_data_x = X_scaled[:][:ratio]
-        test_data_x = X_scaled[:][ratio:]
         
         train_data_y = y_data[:ratio]
         test_data_y = y_data[ratio:]
+
+        train_data_x = X_scaled[:][:ratio]
+        test_data_x = X_scaled[:][ratio:]        
 
         dnn_train_data_x = X_data[:][:ratio]
         dnn_test_data_x = X_data[:][ratio:]
@@ -326,7 +326,11 @@ if __name__ == '__main__':
         np.save(os.path.join(d_,y_test_data_file_name), test_data_y)
         np.save(os.path.join(d_,X_test_data_file_name), test_data_x)
         np.save(os.path.join(d_,"DNN_"+X_test_data_file_name), dnn_test_data_x)
-
+        ################################################################################################
+        #下記はclassification用データ作成SCRIPT
+        #下記のSCRIPTを用いることで翌日の株価(終値)が上がるのか下がるのか二値分類可能
+        #その場合モデルもClassification用に改造しなければならない
+        #
         #y_classify = [1  if sum_last[i + 1] > sum_last[i] else 0 for i in range(sum_last.shape[0] - 1)]
         #if sum_last[-1] > sum_last[0]:
         #y_classify = np.append(y_classify, 1)
@@ -334,6 +338,8 @@ if __name__ == '__main__':
         #y_classify = np.append(y_classify, 0)
         #train_data_y = y_classify[ratio:]
         #test_data_y = y_classify[:ratio]
+        #
+        ################################################################################################
         train_data_y.reshape(-1)
         test_data_y.reshape(-1)
 
