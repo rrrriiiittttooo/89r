@@ -97,7 +97,7 @@ def convert_array_concat(sum_data):
         f = np.append(f,sum_data_arr[i])
     return f
 
-def get_csv(**urls):
+def get_csv(*urls):
     #URL先のCSVを取得する
     
     pattern = r'201[67]'
@@ -119,6 +119,8 @@ def first_make_data():
     #初めてデータを取得する際に使用するメソッド    
     str_d = get_date()
     output_dataframe_file_path = ".\\data\\" + str_d + "vxc_stock"
+
+    
 
     #サイトのcsv fileを取得
     get_csv("http://k-db.com/stocks/6193-T_download=csv","http://k-db.com/stocks/6193-T/1d/2017?download=csv", "http://k-db.com/stocks/6193-T/1d/2016?download=csv")
@@ -269,7 +271,7 @@ def get_date():
 
 if __name__ == '__main__':
     
-    
+
 
     d_ = ".\data"
     m_ = ".\model"
