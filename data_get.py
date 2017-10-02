@@ -123,7 +123,7 @@ def first_make_data():
     
 
     #サイトのcsv fileを取得
-    get_csv("http://k-db.com/stocks/6193-T_download=csv","http://k-db.com/stocks/6193-T/1d/2017?download=csv", "http://k-db.com/stocks/6193-T/1d/2016?download=csv")
+    get_csv("http://k-db.com/stocks/6193-T?download=csv","http://k-db.com/stocks/6193-T/1d/2017?download=csv", "http://k-db.com/stocks/6193-T/1d/2016?download=csv")
 
     #ローカルcsv file入手先
     data_2016 = pd.read_csv(".\data\stocks_6193-T_1d_2016.csv", sep="," ,encoding = "SHIFT-JIS").sort_index(ascending=False)
@@ -149,7 +149,7 @@ def extract_data(data):
     return date, head, hign, low, tail
 
 def get_new_data():
-
+    #二回めから新しいデータを取得するメソッド
     str_d = get_date()
     #DataFrameの格納先、抽出先
     input_file_path = '.\\data\\' + str_d + "vxc_stock"
@@ -157,8 +157,11 @@ def get_new_data():
     #下記のURLから直近250日のCSVデータを取得する
     #url  =  "http://k-db.com/stocks/6193-T_download=csv"
     #urllib.request.urlretrieve(url, '.\data\new_stocks.csv')
+    
+    #最新の株価データを取得する
+    get_csv("http://k-db.com/stocks/6193-T?download=csv")
     #取得したCSVデータをDATAFRAME化し、既存のDATAFRAMEと結合する
-    data_new = pd.read_csv(".\data\new_stocks.csv", sep="," ,encoding = "SHIFT-JIS")
+    data_new = pd.read_csv(".\\data\\new_stocks.csv", sep="," ,encoding = "SHIFT-JIS")
     new_line = data_new[0:1]
 
     with open(input_file_path, 'rb'):
@@ -170,6 +173,7 @@ def get_new_data():
     #各インデックスのデータの取得
     date, head, hign, low, tail = extract_data(new_vxc)
 
+    return date, head, hign, low, tail
 
 def make_y_data(sum_last):
     
@@ -278,8 +282,8 @@ if __name__ == '__main__':
 
     str_d = get_date()
 
-    y_data_file_name = str_d + "_y_data"
-    X_data_file_name = str_d + "_X_data"
+    y_data_file_name = str_d + "_y_data.npy"
+    X_data_file_name = str_d + "_X_data.npy"
 
     y_test_data_file_name = str_d + "_y_test_data.npy"
     X_test_data_file_name = str_d + "_X_test_data.npy"
@@ -289,16 +293,13 @@ if __name__ == '__main__':
         X_data = np.load(os.path.join(d_, X_data_file_name))    
     
     except:
-        #sum_first, sum_top, sum_tail, sum_last = make_data()
-        #s_list = [sum_first, sum_top, sum_tail, sum_last]
+        
         #date, sum_first, sum_top, sum_tail, sum_last = get_new_data()
         #############################################################
-        date, sum_first, sum_top, sum_tail, sum_last = first_make_data()
+        #date, sum_first, sum_top, sum_tail, sum_last = first_make_data()
+        date, sum_first, sum_top, sum_tail, sum_last = get_new_data()
+
         #############################################################
-        #sum_first = convert_array_concat(sum_first)
-        #sum_top = convert_array_concat(sum_top)
-        #sum_tail = convert_array_concat(sum_tail)
-        #sum_last = convert_array_concat(sum_last)
         
         y_data = make_y_data(sum_last)
         X_data = stack_data(sum_first, sum_top, sum_tail, sum_last)
@@ -310,7 +311,7 @@ if __name__ == '__main__':
         
         X_scaled = preprocessing.scale(X_data)
         X_scaled.std(axis=0)
-
+        #全データのうち8割を学習データ、2割をテストデータに分割する
         split_num = 0.8
         ratio = int(X_scaled.shape[0] * split_num)
         train_data_x = X_scaled[:][:ratio]
@@ -321,7 +322,7 @@ if __name__ == '__main__':
 
         dnn_train_data_x = X_data[:][:ratio]
         dnn_test_data_x = X_data[:][ratio:]
-
+        #テストデータをローカルに保存
         np.save(os.path.join(d_,y_test_data_file_name), test_data_y)
         np.save(os.path.join(d_,X_test_data_file_name), test_data_x)
         np.save(os.path.join(d_,"DNN_"+X_test_data_file_name), dnn_test_data_x)
