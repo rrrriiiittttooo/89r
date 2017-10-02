@@ -40,6 +40,10 @@ def training():
 def menu():
     return template("menu")
 
+#################################################
+#モデルネームによって動的ルーティング
+#学習されたモデルを用いて翌日の株価をプレディクトする
+
 @get('/ml/<modelname>')
 def predict(modelname):
     
@@ -57,16 +61,23 @@ def predict(modelname):
 
     x_test_data = np.load(os.path.join(d_, X_test_data_file_name+".npy"))
     y_test_data = np.load(os.path.join(d_, y_test_data_file_name+".npy"))
+    #横軸
     x = np.arange(0, y_test_data.shape[0]-1)
     x = x.tolist()
+    #実際の株価データ
     y_test_data = y_test_data.tolist()
-    
+    #モデルをロード
     model = joblib.load(os.path.join(m_,model_file_name))
+    #モデルにデータを食わせて株価を予想
     data_file_name = model.predict(x_test_data)
     data_file_name = data_file_name.tolist()
+    
     answer = high_Or_Low(y_test_data[-2], data_file_name[-1])
+    #翌日の株価をpick up
     predicted_last = int(data_file_name[-1])
-    y_last = int(y_test_data[-2])#正解の値
+    #正解の値
+    y_last = int(y_test_data[-2])
+    
     data_file_name = data_file_name[:-1]
     y_test_data = y_test_data[:-1]
     
@@ -81,6 +92,10 @@ def high_Or_Low(a, b):
     else:
         answer = "equal"
     return answer
+
+#################################################
+#DNN用/FNN用
+#学習されたモデルを用いて翌日の株価をプレディクトする
 
 @get('/dnn/fnn')
 def predict():
@@ -122,6 +137,9 @@ def high_Or_Low(a, b):
         answer = "equal"
     return answer
 
+#################################################
+#DNN用/RNN用
+#学習されたモデルを用いて翌日の株価をプレディクトする
 @get('/dnn/rnn')
 def predict():
     print("IN!")
@@ -164,7 +182,8 @@ def high_Or_Low2(a, b):
     else:
         answer = "equal"
     return answer
-
-run(host='0.0.0.0', port=8090, debug=True) #ポート8090番でwebサーバーを立てる
+#ポート8090番でwebサーバーを立てる
+#'0.0.0.0'にすることで全てのマシーンからアクセス可能
+run(host='0.0.0.0', port=8090, debug=True) 
 
 
