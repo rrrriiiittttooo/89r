@@ -163,7 +163,7 @@ def get_new_data():
     data_new = pd.read_csv(".\\data\\new_stocks.csv", sep="," ,encoding = "SHIFT-JIS")
     #直近のデータのみ取得
     new_line = data_new[0:1]
-
+    #ローカルのデータフレームをロード
     with open(input_file_path, 'rb'):
         oldDataFrame= pickle.load()
     #取得したCSVデータをDATAFRAME化し、既存のDATAFRAMEと結合する
