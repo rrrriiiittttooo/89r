@@ -20,11 +20,15 @@ def css_dir(filename):
     print(static_file(filename, root=BASE_DIR + '\\views\static\css\\'))
     return static_file(filename, root=BASE_DIR + "\\views\static\css\\")
 
+@route('/image/<filename>')
+def css_dir(filename):
+    return static_file(filename, root=BASE_DIR + "\\views\static\image\\")
+
 @get("/")
 def hello():
-    return template("free")  #views/index.htmlを返す
+    return template("free")
 
-@get("/train")
+@get("/training/model")
 def training():
     d_ = "./data"
     m_ = "./model"
@@ -36,14 +40,19 @@ def training():
 def menu():
     return template("menu")
 
-@get("/ridge")
-def predict():
-    predict_list = []
-    selection = request.query.getall("model")
+#################################################
+#モデルネームによって動的ルーティング
+#学習されたモデルを用いて翌日の株価をプレディクトする
+
+@get('/ml/<modelname>')
+def predict(modelname):
     
     d_ = ".\data"
     m_ = ".\model"
 
+    model_file_name = modelname + ".pkl"
+    print(model_file_name)
+    data_file_name = "predicted_" + modelname    
     d = date.today()
     str_d = str(d)
     
@@ -52,25 +61,29 @@ def predict():
 
     x_test_data = np.load(os.path.join(d_, X_test_data_file_name+".npy"))
     y_test_data = np.load(os.path.join(d_, y_test_data_file_name+".npy"))
+    #横軸
     x = np.arange(0, y_test_data.shape[0]-1)
     x = x.tolist()
+    #実際の株価データ
     y_test_data = y_test_data.tolist()
-    model = joblib.load(os.path.join(m_,"ridge.pkl"))
+    #モデルをロード
+    model = joblib.load(os.path.join(m_,model_file_name))
+    #モデルにデータを食わせて株価を予想
+    data_file_name = model.predict(x_test_data)
+    data_file_name = data_file_name.tolist()
     
-    predicted_ridge = model.predict(x_test_data)
-    predicted_ridge = predicted_ridge.tolist()
+    answer = high_Or_Low(y_test_data[-2], data_file_name[-1])
+    #翌日の株価をpick up
+    predicted_last = int(data_file_name[-1])
+    #正解の値
+    y_last = int(y_test_data[-2])
     
-    answer = division(y_test_data[-2], predicted_ridge[-1])
-    
-    predicted_last = predicted_ridge[-1]
-    y_last = y_test_data[-1]
-    
-    predicted_ridge = predicted_ridge[:-1]
+    data_file_name = data_file_name[:-1]
     y_test_data = y_test_data[:-1]
     
-    return template("plots", list = predicted_ridge, true = y_test_data, p_last = predicted_last, y_last = y_test_data, answer = answer, x = x)
+    return template("plots", list =data_file_name, true = y_test_data, p_last = predicted_last, y_last = y_last, answer = answer, x = x)
 
-def division(a, b):
+def high_Or_Low(a, b):
     
     if a > b:
         answer = "low"
@@ -80,100 +93,97 @@ def division(a, b):
         answer = "equal"
     return answer
 
-@get("/prediction")
-def predicting():
-        
-    predict_list = []
-    selection = request.query.getall("model")
+#################################################
+#DNN用/FNN用
+#学習されたモデルを用いて翌日の株価をプレディクトする
+
+@get('/dnn/fnn')
+def predict():
     
     d_ = ".\data"
     m_ = ".\model"
-
+    
     d = date.today()
     str_d = str(d)
-
-    y_test_data_file_name = str_d + "_y_test_data"
-    X_test_data_file_name = str_d + "_X_test_data"
-
-    x_test_data = np.load(os.path.join(d_, X_test_data_file_name+".npy"))
-    y_test_data = np.load(os.path.join(d_, y_test_data_file_name+".npy"))
     
-    x = np.arange(0, y_test_data.shape[0])
+    X_test_data_file_name = "DNN_" + str_d + "_X_test_data.npy"
+    y_test_data_file_name = str_d + "_y_test_data.npy"
+
+    x_test_data = np.load(os.path.join(d_, X_test_data_file_name))
+    y_test_data = np.load(os.path.join(d_, y_test_data_file_name))
+    x = np.arange(0, y_test_data.shape[0]-1)
     x = x.tolist()
-    json_data = {"x":x}
-    fw = open(os.path.join(d_, 'x.json'), "w")
-    json.dump(json_data, fw) 
-    datas = []
-    next_stock = []
-    for model in selection:
-        
-        if model is "1":
-            
-            model = joblib.load(os.path.join(m_,"ridge.pkl"))
-            predicted_ridge = model.predict(x_test_data)
-            #predict_list.append(predicted_ridge)
-            predicted_ridge = predicted_ridge.tolist()
-
-            json_data = {"ridge_data":predicted_ridge}
-
-            fw = open(os.path.join(d_, 'ridge.json'), "w")
-            json.dump(json_data, fw)
-
-            datas.append(predicted_ridge)
-            next_stock.append("Ridge Regression : " + str(predicted_ridge[-1]) + "\n")
-        if model is "2":
-            model = joblib.load(os.path.join(m_,"lasso.pkl"))
-            predicted_lasso = model.predict(x_test_data)
-            #predict_list.append(predicted_lasso)
-            predicted_lasso = predicted_lasso.tolist()
-            fw = open(os.path.join(d_,'lasso.json'), "w")
-            json.dump(predicted_lasso, fw)
-            datas.append(predicted_lasso)
-            next_stock.append("Lasso Regression : " + predicted_lasso[-1] + "\n")
-        if model is "3":
-            model = joblib.load(os.path.join(m_,"linear.pkl"))
-            predicted_linear = model.predict(x_test_data)
-            #predict_list.append(predicted_linear)
-            predicted_linear = predicted_linear.tolist()
-            fw = open(os.path.join(d_,'linear.json'), "w")
-            json.dump(predicted_linear, fw)
-            datas.append(predicted_linear)
-            next_stock.append("linear Regression : " + predicted_linear[-1])
-        if model is "4":
-            model = joblib.load(os.path.join(m_,"svr.pkl"))
-            predicted_svr = model.predict(x_test_data)
-            #predict_list.append(predicted_svr)
-            predicted_svr = predicted_svr.tolist()
-            fw = open(os.path.join(d_,'svr.json'), "w")
-            json.dump(predicted_svr, fw)
-            datas.append(predicted_svr)
-            next_stock.append("SVR Regression :  " + predicted_svr[-1] + "\n")
-        if model is "5":
-            json_string = open(os.path.join(m_, 'fnn_model.json')).read()
-            model = model_from_json(json_string)
-            model.load_weights(os.path.join(m_, 'fnn_model_weights.hdf5'))           
-            predicted_fnn = model.predict(x_test_data)
-            #predict_list.append(predicted_fnn)
-            predicted_fnn = predicted_fnn.tolist()
-            fw = open(os.path.join(d_,'fnn.json'), "w")
-            json.dump(predicted_fnn, fw)
-            datas.append(predicted_fnn)
-            next_stock.append(predicted_fnn[-1])
-        if model is "6":
-            rnn_test_x = x_test_data.reshape(x_test_data.shape[0],1,x_test_data.shape[1])
-            json_string = open(os.path.join(m_, 'lstm_model.json')).read()
-            model = model_from_json(json_string)
-            model.load_weights(os.path.join(m_, 'lstm_model_weights.hdf5'))           
-            predicted_lstm = model.predict(rnn_test_x)
-            #predict_list.append(predicted_rnn)      
-            predicted_lstm = predicted_lstm.tolist()
-            fw = open(os.path.join(d_,'lstm.json'), "w")
-            json.dump(predicted_lstm, fw)
-            datas.append(predicted_lstm)
-            next_stock.append(predicted_lstm[-1])
+    json_string = open(os.path.join(m_, 'fnn_model.json')).read()
+    model = model_from_json(json_string)
+    model.load_weights(os.path.join(m_, 'fnn_model_weights.hdf5'))          
+    predicted_fnn = model.predict(x_test_data).flatten().tolist()
+    y_test_data = y_test_data.tolist()
+    answer = high_Or_Low(y_test_data[-2], predicted_fnn[-1])
+    predicted_last = int(predicted_fnn[-1])
+    y_last = int(y_test_data[-2])
+    predicted_fnn = predicted_fnn[:-1]
+    y_test_data = y_test_data[:-1]
     
-    return template("plot", list = datas, next_stock = next_stock) 
+    return template("plots", list =predicted_fnn, true = y_test_data, p_last = predicted_last, y_last = y_last, answer = answer, x = x)
+
+def high_Or_Low(a, b):
+    a = float(a)
+    b = float(b)
+    if a > b:
+        answer = "Down"
+    elif a < b:
+        answer = "Up"
+    else:
+        answer = "equal"
+    return answer
+
+#################################################
+#DNN用/RNN用
+#学習されたモデルを用いて翌日の株価をプレディクトする
+@get('/dnn/rnn')
+def predict():
+    print("IN!")
+    d_ = ".\data"
+    m_ = ".\model"
+    
+    d = date.today()
+    str_d = str(d)
+    
+    X_test_data_file_name = "DNN_" + str_d + "_X_test_data.npy"
+    y_test_data_file_name = str_d + "_y_test_data.npy"
+        
+    x_test_data = np.load(os.path.join(d_, X_test_data_file_name))
+    y_test_data = np.load(os.path.join(d_, y_test_data_file_name))
+    
+    rnn_test_x = x_test_data.reshape(x_test_data.shape[0],1,x_test_data.shape[1])
+    
+    x = np.arange(0, y_test_data.shape[0]-1)
+    x = x.tolist()
+    y_test_data = y_test_data.tolist()
+    
+    json_string = open(os.path.join(m_, 'rnn_model.json')).read()
+    model = model_from_json(json_string)
+    model.load_weights(os.path.join(m_, 'rnn_model_weights.hdf5'))           
+    predicted_rnn = model.predict(rnn_test_x).flatten().tolist()
+    print(predicted_rnn[-1], y_test_data[-2])
+    answer = high_Or_Low2(y_test_data[-2], predicted_rnn[-1])
+    predicted_last = predicted_rnn[-1]
+    y_last = y_test_data[-2]
+    y_test_data = y_test_data[:-1]
+    
+    return template("plots", list =predicted_rnn, true = y_test_data, p_last = predicted_last, y_last = y_last, answer = answer, x = x)
+def high_Or_Low2(a, b):
+    a = float(a)
+    b = float(b)
+    if a > b:
+        answer = "low"
+    elif a < b:
+        answer = "Up"
+    else:
+        answer = "equal"
+    return answer
+#ポート8090番でwebサーバーを立てる
+#'0.0.0.0'にすることで全てのマシーンからアクセス可能
+run(host='0.0.0.0', port=8090, debug=True) 
 
 
-
-run(host="localhost", port=8090) #ポート8080番でwebサーバーを立てる

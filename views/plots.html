@@ -1,27 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>ここにページのタイトル書くよ！</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" type="text/css" href=".\css\standard.css">
+    <link href="/css/standard.css" rel="stylesheet" type="text/css">
   </head>
   <body>
     
-    
-    <div id = "sample1" data-test = '{{list}}' data-true='{{true}}' data-last='{{p_last}}' data-ylast='{{y_last}}' data-x = '{{x}}'></div>
+        昨日の終値は{{y_last}}であった。明日の予想終値は{{p_last}}となる。よって終値は{{answer}}する予想である
+        <div id = "sample1" data-test = '{{list}}' data-true='{{true}}' data-plast='{{p_last}}' data-ylast='{{y_last}}' data-x = '{{x}}'></div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.4/Chart.min.js"></script>
         <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
-    <h2>{{answer}}</h2>
-        <div id = "chart" style = "margin-left:50px; display:inline-block; margin-left:35%;">
-        <canvas id="myChart" width="1000px" height="1000"></canvas>
+    
+        <div id = "chart" style = "margin-left:50px; display:inline-block;">
+        <canvas id="myChart" width = "1100" height="600"></canvas>
     </div> 
 
     <script>
-
-        var element = $('div').data("test");
+        var element = $('div').data("test"); 
         var x = $('div').data("x");
         var t = $('div').data("true");
-        var y = $('div').data("last");
+        var y = $('div').data("plast");
         var p = $('div').data("ylast");
         var ctx = document.getElementById('myChart').getContext('2d');
         var myChart = new Chart(ctx, {
@@ -33,29 +31,20 @@
             fill:false,
             data: element,
             tension: 0,
-            backgroundColor: "rgba(153,255,51,0.4)"
-
+            backgroundColor: "blue"
             },{
             label: 'true',
             fill: false,
             data: t,
             tension: 0,
-            backgroundColor: "rgba(143,12,14,5,1)"
+            backgroundColor: "red"
             }]
             },
-            options:{
-                title:{
-                    display: true,
-                    text: 'これまでの株価の予想と実際の株価'
-                },
-                layout:{
-                    left: 25,
-                    right: 25,
-                    top: 0,
-                    bottom: 0
-                }  
+            option :{
+                title : "実際の株価とこのモデルでの予測値の比較"
             }
             });
     </script>
+    
   </body>
 </html>
