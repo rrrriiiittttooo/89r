@@ -1,1 +1,1 @@
-# 89r
+# Predict stocks using major regressor
